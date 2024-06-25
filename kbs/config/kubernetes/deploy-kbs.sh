@@ -6,9 +6,10 @@ set -euo pipefail
 DEPLOYMENT_DIR="${DEPLOYMENT_DIR:-overlays}"
 
 k8s_cnf_dir="$(dirname ${BASH_SOURCE[0]})"
+ARCH=$(uname -m)
 
 # Fail the script if the key.bin file does not exist.
-key_file="${k8s_cnf_dir}/overlays/key.bin"
+key_file="${k8s_cnf_dir}/overlays/${ARCH}/key.bin"
 [[ -f "${key_file}" ]] || {
     echo "key.bin file does not exist"
     exit 1
@@ -21,4 +22,18 @@ kbs_cert="${k8s_cnf_dir}/base/kbs.pem"
     openssl pkey -in "${k8s_cnf_dir}/base/kbs.key" -pubout -out "${kbs_cert}"
 }
 
-kubectl apply -k "./${k8s_cnf_dir}/${DEPLOYMENT_DIR}"
+if [ "${ARCH}" == "s390x" ] && [ -n "${IBM_SE_CREDS_DIR:-}" ]; then
+    export NODE_NAME=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+    envsubst <"${k8s_cnf_dir}/overlays/s390x/pv.yaml" | kubectl apply -f -
+else
+    echo "IBM_SE_CREDS_DIR is empty" >&2
+    exit 1
+fi
+
+if [ "${DEPLOYMENT_DIR}" == "nodeport" ]; then
+    kubectl apply -k "${k8s_cnf_dir}/${DEPLOYMENT_DIR}/${ARCH}"
+elif [ "${DEPLOYMENT_DIR}" == "overlays" ]; then
+    kubectl apply -k "${k8s_cnf_dir}/${DEPLOYMENT_DIR}/${ARCH}"
+else
+    kubectl apply -k "${k8s_cnf_dir}/${DEPLOYMENT_DIR}"
+fi

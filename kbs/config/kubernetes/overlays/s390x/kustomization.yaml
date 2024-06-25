@@ -3,15 +3,18 @@ kind: Kustomization
 namespace: coco-tenant
 
 resources:
-- ../base
+- ../common
+- pvc.yaml
 
 patches:
-- path: patch.yaml
+- path: volume-patch.yaml
   target:
-    group: apps
     kind: Deployment
     name: kbs
-    version: v1
+- path: patch.yaml
+  target:
+    kind: Deployment
+    name: kbs
 
 # Store keys that KBS will release to workloads after attestation:
 # kbs:///reponame/workload_key/key.bin
