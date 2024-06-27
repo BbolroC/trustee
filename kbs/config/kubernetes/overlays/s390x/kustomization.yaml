@@ -7,10 +7,6 @@ resources:
 - pvc.yaml
 
 patches:
-- path: volume-patch.yaml
-  target:
-    kind: Deployment
-    name: kbs
 - path: patch.yaml
   target:
     kind: Deployment

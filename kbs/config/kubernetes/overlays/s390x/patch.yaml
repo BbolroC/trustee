@@ -5,19 +5,6 @@ metadata:
 spec:
   template:
     spec:
-      initContainers:
-      - command:
-        - sh
-        - -c
-        - cp -r /config/$(readlink /config/policy.rego) /opa/confidential-containers/kbs/
-        image: busybox
-        imagePullPolicy: Always
-        name: copy-config
-        volumeMounts:
-        - mountPath: /config
-          name: config-volume
-        - mountPath: /opa/confidential-containers/kbs
-          name: policy-volume
       containers:
       - name: kbs
         env:
@@ -27,9 +14,6 @@ spec:
         - name: my-local-volume
           mountPath: /run/confidential-containers/ibmse/
       volumes:
-      - name: config-volume
-        configMap:
-          name: policy-config
       - name: my-local-volume
         persistentVolumeClaim:
           claimName: my-local-pvc
